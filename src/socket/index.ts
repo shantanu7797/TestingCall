@@ -182,10 +182,10 @@ const mountStopTypingEvent = (socket: Socket): void => {
 //   });
 // };
 // --- WebRTC Events ---
-const mountWebRTCEvents = (io: any, socket: Socket): void => {
+const mountWebRTCEvents = (io: Namespace, socket: Socket): void => {
   // 1️⃣ Frontend emits "newOffer"
   socket.on("newOffer", ({ newOffer, sendToUserId }) => {
-    console.log(`🔔 newOffer from ${socket.user?._id} → ${sendToUserId}`);
+    colorsUtils.log("info", `🔔 newOffer from ${socket.user?._id} → ${sendToUserId}`);
     io.to(sendToUserId).emit("newOfferAwaiting", {
       offer: newOffer,
       offererUserId: socket.user?._id.toString(),
@@ -210,13 +210,13 @@ const mountWebRTCEvents = (io: any, socket: Socket): void => {
 
   // (Optional) you can still support the old events too:
   socket.on("call-user", ({ to, offer }) => {
-    io.to(to).emit("call-made", { from: socket.user?._id.toString(), offer });
+    io.to(to).emit("call-made", { from: socket.user?._id.toString() || '', offer });
   });
   socket.on("make-answer", ({ to, answer }) => {
-    io.to(to).emit("answer-made", { from: socket.user?._id.toString(), answer });
+    io.to(to).emit("answer-made", { from: socket.user?._id.toString() || '', answer });
   });
   socket.on("ice-candidate", ({ to, candidate }) => {
-    io.to(to).emit("ice-candidate", { from: socket.user?._id.toString(), candidate });
+    io.to(to).emit("ice-candidate", { from: socket.user?._id.toString() || '', candidate });
   });
 };
 
