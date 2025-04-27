@@ -149,38 +149,82 @@ const mountStopTypingEvent = (socket: Socket): void => {
 };
 
 // --- WebRTC Events ---
+// const mountWebRTCEvents = (io: any, socket: Socket): void => {
+//   // Offer from caller
+//   socket.on("call-user", ({ to, offer }) => {
+//     io.to(to).emit("call-made", {
+//       from: socket.user?._id.toString(),
+//       offer,
+//     });
+//   });
+
+//   // Answer from callee
+//   socket.on("make-answer", ({ to, answer }) => {
+//     io.to(to).emit("answer-made", {
+//       from: socket.user?._id.toString(),
+//       answer,
+//     });
+//   });
+
+//   // ICE Candidate from either party
+//   socket.on("ice-candidate", ({ to, candidate }) => {
+//     io.to(to).emit("ice-candidate", {
+//       from: socket.user?._id.toString(),
+//       candidate,
+//     });
+//   });
+
+//   // End call
+//   socket.on("end-call", ({ to }) => {
+//     io.to(to).emit("call-ended", {
+//       from: socket.user?._id.toString(),
+//     });
+//   });
+// };
+// --- WebRTC Events ---
 const mountWebRTCEvents = (io: any, socket: Socket): void => {
-  // Offer from caller
+  // 1️⃣ Frontend emits "newOffer"
+  socket.on("newOffer", ({ newOffer, sendToUserId }) => {
+    console.log(`🔔 newOffer from ${socket.user?._id} → ${sendToUserId}`);
+    io.to(sendToUserId).emit("newOfferAwaiting", {
+      offer: newOffer,
+      offererUserId: socket.user?._id.toString(),
+    });
+  });
+
+  // 2️⃣ Frontend emits "newAnswer"
+  socket.on("newAnswer", ({ answer, offererUserId }) => {
+    console.log(`🔔 newAnswer from ${socket.user?._id} → ${offererUserId}`);
+    io.to(offererUserId).emit("answerResponse", answer);
+  });
+
+  // 3️⃣ Frontend emits "sendIceCandidateToSignalingServer"
+  socket.on("sendIceCandidateToSignalingServer", ({ iceCandidate, iceUserId, didIOffer }) => {
+    // decide which peer should get it:
+    // if I offered, send to the callee (iceUserId is my ID so target is the other)
+    // if I answered, send to the original offerer
+    const targetId = didIOffer
+      ? /* the callee’s ID should be embedded on the client side */
+        /* ideally you pass both sender & recipient in the payload */
+        iceUserId === socket.user?._id.toString() ? /* other ID */ "" : iceUserId
+      : iceUserId; 
+
+    console.log(`🔔 ICE from ${socket.user?._id} → ${targetId}`);
+    io.to(targetId).emit("receivedIceCandidateFromServer", iceCandidate);
+  });
+
+  // (Optional) you can still support the old events too:
   socket.on("call-user", ({ to, offer }) => {
-    io.to(to).emit("call-made", {
-      from: socket.user?._id.toString(),
-      offer,
-    });
+    io.to(to).emit("call-made", { from: socket.user?._id.toString(), offer });
   });
-
-  // Answer from callee
   socket.on("make-answer", ({ to, answer }) => {
-    io.to(to).emit("answer-made", {
-      from: socket.user?._id.toString(),
-      answer,
-    });
+    io.to(to).emit("answer-made", { from: socket.user?._id.toString(), answer });
   });
-
-  // ICE Candidate from either party
   socket.on("ice-candidate", ({ to, candidate }) => {
-    io.to(to).emit("ice-candidate", {
-      from: socket.user?._id.toString(),
-      candidate,
-    });
-  });
-
-  // End call
-  socket.on("end-call", ({ to }) => {
-    io.to(to).emit("call-ended", {
-      from: socket.user?._id.toString(),
-    });
+    io.to(to).emit("ice-candidate", { from: socket.user?._id.toString(), candidate });
   });
 };
+
 
 // --- Socket.IO Initialization ---
 const initSocketIo = (io: any): void => {
