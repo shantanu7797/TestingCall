@@ -3,7 +3,7 @@ dotenv.config();
 
 export const environment = process.env.NODE_ENV || "development";
 export const port = process.env.PORT || "5000";
-export const serverUrl = process.env.SERVER_URL?.trim() || "http://localhost:5000";
+export const serverUrl = process.env.SERVER_URL?.trim() || "https://testingcall.onrender.com";
 
 export const db = {
   name: process.env.DB_NAME || "zenChat",
@@ -13,7 +13,7 @@ export const db = {
 };
 
 // spliting the corlUrl and return url string array
-export const corsUrl = process.env.CORS_URL?.split(",") || "http://localhost:3002";
+export const corsUrl = process.env.CORS_URL?.split(",") || "https://zenchats.netlify.app";
 console.log(corsUrl);
 
 export const cookieValidity = process.env.COOKIE_VALIDITY_SEC || "172800";
