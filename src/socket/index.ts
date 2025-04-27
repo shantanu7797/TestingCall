@@ -199,19 +199,14 @@ const mountWebRTCEvents = (io: any, socket: Socket): void => {
   });
 
   // 3️⃣ Frontend emits "sendIceCandidateToSignalingServer"
-  socket.on("sendIceCandidateToSignalingServer", ({ iceCandidate, iceUserId, didIOffer }) => {
-    // decide which peer should get it:
-    // if I offered, send to the callee (iceUserId is my ID so target is the other)
-    // if I answered, send to the original offerer
-    const targetId = didIOffer
-      ? /* the callee’s ID should be embedded on the client side */
-        /* ideally you pass both sender & recipient in the payload */
-        iceUserId === socket.user?._id.toString() ? /* other ID */ "" : iceUserId
-      : iceUserId; 
-
-    console.log(`🔔 ICE from ${socket.user?._id} → ${targetId}`);
-    io.to(targetId).emit("receivedIceCandidateFromServer", iceCandidate);
-  });
+  socket.on(
+    "sendIceCandidateToSignalingServer",
+    ({ iceCandidate, iceUserId }) => {
+      console.log(`🔔 ICE from ${socket.user?._id} → ${iceUserId}`);
+      io.to(iceUserId).emit("receivedIceCandidateFromServer", iceCandidate);
+    }
+  );
+  
 
   // (Optional) you can still support the old events too:
   socket.on("call-user", ({ to, offer }) => {
